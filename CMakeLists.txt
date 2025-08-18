@@ -19,6 +19,13 @@ ENDIF ()
 
 add_subdirectory(contribs/clickhouse-cpp)
 
+find_package(args REQUIRED)
+
+set(TARGET_LIBRARIES
+        taywee::args
+        clickhouse-cpp-lib
+)
+
 add_executable(
         RithmicTickDataCollection
         main.cpp
@@ -27,5 +34,5 @@ add_executable(
         src/Utils.cpp
 )
 
-TARGET_INCLUDE_DIRECTORIES(RithmicTickDataCollection PRIVATE include ${Rithmic_INCLUDE_DIRS})
-target_link_libraries(RithmicTickDataCollection PRIVATE ${Rithmic_LIBARIES} ${SYSTEM_LIBRARIES})
+TARGET_INCLUDE_DIRECTORIES(RithmicTickDataCollection PRIVATE include ${Rithmic_INCLUDE_DIRS} contribs/clickhouse-cpp/ contribs/clickhouse-cpp/contrib/absl)
+target_link_libraries(RithmicTickDataCollection PRIVATE ${Rithmic_LIBARIES} ${SYSTEM_LIBRARIES} ${TARGET_LIBRARIES})

@@ -26,16 +26,6 @@
 
 namespace ClickhouseUtils {
     inline std::string DB_NAME;
-    static const inline std::string MINUTELY_DATA_TABLE_NAME = "minutely_data_jan_2025";
-
-    static const inline std::string ANNUAL_RESULTS_TABLE_NAME = "brute_force_walkforward_annual_results_20250422";
-    static const inline std::string PERIOD_RESULTS_TABLE_NAME = "brute_force_walkforward_period_results";
-
-    static const inline std::string DISTINCT_TABLE_NAME = "brute_force_walkforward_annual_results_distinct";
-
-    static const inline std::string ENTRY_STUDY_NODES_TABLE_NAME = "study_of_studies_comparators_study_nodes";
-    static const inline std::string LIMIT_OR_STOP_PRICE_STUDY_NODES_TABLE_NAME = "studies_of_studies_of_type_price_study_nodes";
-
     static const inline std::string DB_HOST = "192.168.0.142";
     static const inline std::string DB_USER = "default";
     static const inline std::string DB_PASSWORD = "gfxygggq";
@@ -124,7 +114,7 @@ namespace ClickhouseUtils {
                         dstNullCol->Append(typename DstCol::ValueType{});
                     else
                         // insert the real value
-                        dstNullCol->Append(typename DstCol::ValueType{ srcNested->At(r) }); // optional with payload
+                        dstNullCol->Append(typename DstCol::ValueType{srcNested->At(r)}); // optional with payload
                 }
                 return;
             }
@@ -215,41 +205,71 @@ namespace ClickhouseUtils {
     template <class T>
     inline constexpr bool is_vector_v = is_std_vector<std::decay_t<T>>::value;
 
-    // 0-c)  Map scalar → ClickHouse column type
-    template <class T>
-    struct ColumnFor; // primary = undefined
+    // Primary (two-parameter) – only ONE of these in your whole codebase.
+    template <class T, class Enable = void>
+    struct ColumnFor;
+
+    /* Non-integral direct mappings */
     template <>
-    struct ColumnFor<std::uint8_t> {
-        using type = clickhouse::ColumnUInt8;
+    struct ColumnFor<std::string, void> {
+        using type = clickhouse::ColumnString;
     };
 
     template <>
-    struct ColumnFor<std::uint16_t> {
-        using type = clickhouse::ColumnUInt16;
-    };
-
-    template <>
-    struct ColumnFor<std::uint32_t> {
-        using type = clickhouse::ColumnUInt32;
-    };
-
-    template <>
-    struct ColumnFor<float> {
+    struct ColumnFor<float, void> {
         using type = clickhouse::ColumnFloat32;
     };
 
     template <>
-    struct ColumnFor<double> {
+    struct ColumnFor<double, void> {
         using type = clickhouse::ColumnFloat64;
     };
 
-    template <>
-    struct ColumnFor<std::string> {
-        using type = clickhouse::ColumnString;
+    /* Signed integrals by width */
+    template <class T>
+    struct ColumnFor<T, std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) == 1>> {
+        using type = clickhouse::ColumnInt8;
     };
 
     template <class T>
-    using ColumnForT = typename ColumnFor<std::decay_t<T>>::type;
+    struct ColumnFor<T, std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) == 2>> {
+        using type = clickhouse::ColumnInt16;
+    };
+
+    template <class T>
+    struct ColumnFor<T, std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) == 4>> {
+        using type = clickhouse::ColumnInt32;
+    };
+
+    template <class T>
+    struct ColumnFor<T, std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) == 8>> {
+        using type = clickhouse::ColumnInt64;
+    };
+
+    /* Unsigned integrals by width */
+    template <class T>
+    struct ColumnFor<T, std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) == 1>> {
+        using type = clickhouse::ColumnUInt8;
+    };
+
+    template <class T>
+    struct ColumnFor<T, std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) == 2>> {
+        using type = clickhouse::ColumnUInt16;
+    };
+
+    template <class T>
+    struct ColumnFor<T, std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) == 4>> {
+        using type = clickhouse::ColumnUInt32;
+    };
+
+    template <class T>
+    struct ColumnFor<T, std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) == 8>> {
+        using type = clickhouse::ColumnUInt64;
+    };
+
+    /* Helper alias (use remove_cvref to be robust) */
+    template <class T>
+    using ColumnForT = typename ColumnFor<std::remove_cv_t<std::remove_reference_t<T>>>::type;
 
     // extra trait: “is a pair of column pointers?”
     template <class P>
@@ -286,7 +306,7 @@ namespace ClickhouseUtils {
             auto col = std::make_shared<ColT>();
             col->Reserve(arg.size());
             for (const auto& v : arg) col->Append(v);
-            block.AppendColumn(name, col);
+            block.AppendColumn(std::string{name}, col);
         }
 
         /* ───── path 3: caller passes {dataCol, nullMaskCol} ─────────────── */

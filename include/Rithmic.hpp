@@ -85,10 +85,6 @@ private:
 
     std::vector<AssetIdentifier> assetIdentifiers;
 
-    SpscRingBuffer<RApi::TradeInfo, 1<<20> g_tradeQueue; // ~1M slots.
-    std::atomic<uint64_t> g_dropped{0}; // Monitorbackpressure drops
-
-
 public:
     explicit Rithmic(const std::string& instance1);
     RApi::REngine* login();
@@ -101,4 +97,7 @@ public:
     void getTradeRoutes() const;
 
     void subscribe(const tsNCharcb &exchange, const std::string& ticker);
+
+    SpscRingBuffer<RApi::TradeInfo, 1<<20> g_tradeQueue; // ~1M slots.
+    std::atomic<uint64_t> g_dropped{0}; // Monitorbackpressure drops
 };
