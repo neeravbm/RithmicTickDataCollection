@@ -9,7 +9,6 @@
 
 #include "Constants.hpp"
 #include "Rithmic.hpp"
-#include "Series.hpp"
 #include "Utils.hpp"
 
 #ifndef WinOS
@@ -208,7 +207,7 @@ void Rithmic::subscribeToRealTimeTradesAndQuotes() const {
     for (const auto [exchange, ticker] : assetIdentifiers) {
         auto exchange1 = exchange;
         auto ticker1 = ticker;
-        if (!myEngine->subscribe(&exchange1, &ticker1, RApi::MD_QUOTES | RApi::MD_PRINTS, &code)) {
+        if (!myEngine->subscribe(&exchange1, &ticker1, RApi::MD_PRINTS, &code)) {
             std::cout << "REngine::subscribe() error : " << code << std::endl;
             throw std::exception();
         }
@@ -234,6 +233,7 @@ void Rithmic::subscribeToHistoricalTrades() const {
     for (const auto [exchange, ticker] : assetIdentifiers) {
         auto exchange1 = exchange;
         auto ticker1 = ticker;
+        const auto currentTime = (int)time(NULL);
         if (!myEngine->replayTrades(&exchange1, &ticker1, 0, 0, &code)) {
             std::cout << "REngine::replayTrades() error : " << code << std::endl;
             throw std::exception();
@@ -274,9 +274,8 @@ void Rithmic::setAccountInfo(const RApi::AccountInfo& accountInfo) {
 
 void
 Rithmic::subscribe(const tsNCharcb& exchange, const std::string& ticker) {
-    tsNCharcb tickerStr;
-    Utils::setString(tickerStr, ticker);
-    assetIdentifiers.emplace_back(exchange, tickerStr);
+    const auto s = Utils::toString(ticker.c_str());
+    assetIdentifiers.emplace_back(exchange, *Utils::cloneString(s));
 }
 
 Rithmic::Callbacks::Callbacks(Rithmic* parent) : parent(parent) {}
@@ -445,6 +444,39 @@ int Rithmic::Callbacks::BarReplay(RApi::BarReplayInfo* pInfo, void* pContext, in
     return (OK);
 }
 
+int Rithmic::Callbacks::BestAskQuote(RApi::AskInfo* pInfo, void* pContext, int* aiCode) {
+    std::cout << "BestAskQuote called" << std::endl;
+
+    int iIgnored;
+    if (!pInfo -> dump(&iIgnored)) {
+        std::cout << "error in pInfo -> dump : " << iIgnored << std::endl;
+    }
+
+    return (OK);
+}
+
+int Rithmic::Callbacks::BestBidAskQuote(RApi::BidInfo* pBid, RApi::AskInfo* pAsk, void* pContext, int* aiCode) {
+    std::cout << "BestBidAskQuote called" << std::endl;
+
+    int iIgnored;
+    if (!pBid -> dump(&iIgnored)) {
+        std::cout << "error in pInfo -> dump : " << iIgnored << std::endl;
+    }
+
+    return (OK);
+}
+
+int Rithmic::Callbacks::BestBidQuote(RApi::BidInfo* pInfo, void* pContext, int* aiCode) {
+    std::cout << "BestBidQuote called" << std::endl;
+
+    int iIgnored;
+    if (!pInfo -> dump(&iIgnored)) {
+        std::cout << "error in pInfo -> dump : " << iIgnored << std::endl;
+    }
+
+    return (OK);
+}
+
 int Rithmic::Callbacks::BidQuote(RApi::BidInfo* pInfo, void* pContext, int* aiCode) {
     std::cout << "BidQuote called" << std::endl;
 
@@ -569,7 +601,7 @@ int Rithmic::Callbacks::TradeRouteList(RApi::TradeRouteListInfo* pInfo, void* pC
     tsNCharcb sTradeRoute;
     tsNCharcb sStatus;
 
-    bool tradeRouteToCMEFound = false, tradeRouteToNYMEXFound = false;
+    bool tradeRouteToCMEFound = false, tradeRouteToNYMEXFound = false, tradeRouteToCBOTFound = false, tradeRouteToCOMEXFound = false;
     for (int i = 0; i < pInfo->iArrayLen; i++) {
         sFcmId = pInfo->asTradeRouteInfoArray[i].sFcmId;
         sIbId = pInfo->asTradeRouteInfoArray[i].sIbId;
@@ -591,11 +623,23 @@ int Rithmic::Callbacks::TradeRouteList(RApi::TradeRouteListInfo* pInfo, void* pC
                 Utils::setString(Constants::TRADE_ROUTE_NYMEX, sTradeRoute);
                 tradeRouteToNYMEXFound = true;
             }
+            else if (!tradeRouteToCBOTFound && Utils::areEqual(Constants::EXCHANGE_CBOT, sExchange)) {
+                std::cout << "Found the trade route to CBOT" << std::endl;
+                Utils::setString(Constants::TRADE_ROUTE_CBOT, sTradeRoute);
+                tradeRouteToCBOTFound = true;
+            }
+            else if (!tradeRouteToCOMEXFound && Utils::areEqual(Constants::EXCHANGE_COMEX, sExchange)) {
+                std::cout << "Found the trade route to COMEX" << std::endl;
+                Utils::setString(Constants::TRADE_ROUTE_COMEX, sTradeRoute);
+                tradeRouteToCOMEXFound = true;
+            }
         }
     }
 
     if (!tradeRouteToCMEFound) Utils::setNull(Constants::TRADE_ROUTE_CME);
     if (!tradeRouteToNYMEXFound) Utils::setNull(Constants::TRADE_ROUTE_NYMEX);
+    if (!tradeRouteToCBOTFound) Utils::setNull(Constants::TRADE_ROUTE_CBOT);
+    if (!tradeRouteToCOMEXFound) Utils::setNull(Constants::TRADE_ROUTE_COMEX);
 
     parent->bRcvdTradeRoutes = true;
 
@@ -767,7 +811,7 @@ int Rithmic::Callbacks::TradePrint(RApi::TradeInfo* pInfo, void* pContext, int* 
     /*   ----------------------------------------------------------------   */
 
     printf("\n\nReceived Trade Report\n");
-    pInfo->dump(&iIgnored);
+    //pInfo->dump(&iIgnored);
 
     RApi::TradeInfo t;
     // Flags

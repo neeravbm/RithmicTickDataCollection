@@ -19,15 +19,15 @@ namespace Constants {
     // Number of hours by which UTC is ahead of Eastern time currently.
     constexpr int OFFSET_HOURS = 5;
 
-    constexpr tsNCharcb TICKER_ES = {(char *)"ESU5", 4};
-    constexpr tsNCharcb TICKER_NQ = {(char *)"NQU5", 4};
-    constexpr tsNCharcb TICKER_RB = {(char *)"RBU5", 4};
-    constexpr tsNCharcb TICKER_BTC = {(char *)"BTCQ5", 5};
-
     constexpr tsNCharcb EXCHANGE_CME = {(char *)"CME", 3};
     constexpr tsNCharcb EXCHANGE_NYMEX = {(char *)"NYMEX", 5};
+    constexpr tsNCharcb EXCHANGE_CBOT = {(char *)"CBOT", 4};
+    constexpr tsNCharcb EXCHANGE_COMEX = {(char *)"COMEX", 5};
+
     inline tsNCharcb TRADE_ROUTE_CME;
     inline tsNCharcb TRADE_ROUTE_NYMEX;
+    inline tsNCharcb TRADE_ROUTE_CBOT;
+    inline tsNCharcb TRADE_ROUTE_COMEX;
 
     inline RApi::AccountInfo ACCOUNT_INFO;
 

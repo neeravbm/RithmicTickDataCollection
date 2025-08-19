@@ -39,6 +39,9 @@ private:
         int AskQuote(RApi::AskInfo* pInfo, void* pContext, int* aiCode) override;
         int Bar(RApi::BarInfo *pInfo, void *pContext, int *aiCode) final;
         int BarReplay(RApi::BarReplayInfo * pInfo, void *pContext, int *aiCode) final;
+        int BestAskQuote(RApi::AskInfo* pInfo, void* pContext, int* aiCode) override;
+        int BestBidAskQuote(RApi::BidInfo* pBid, RApi::AskInfo* pAsk, void* pContext, int* aiCode) override;
+        int BestBidQuote(RApi::BidInfo* pInfo, void* pContext, int* aiCode) override;
         int BidQuote(RApi::BidInfo* pInfo, void* pContext, int* aiCode) override;
         int BustReport(RApi::OrderBustReport *pReport, void *pContext, int *aiCode) final;
         int CancelReport(RApi::OrderCancelReport *pReport, void *pContext, int *aiCode) final;
