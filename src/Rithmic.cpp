@@ -810,7 +810,8 @@ int Rithmic::Callbacks::TradePrint(RApi::TradeInfo* pInfo, void* pContext, int* 
 
     /*   ----------------------------------------------------------------   */
 
-    printf("\n\nReceived Trade Report\n");
+    std::cout << Utils::toString(pInfo->sTicker);
+    printf("Received Trade Report\n");
     //pInfo->dump(&iIgnored);
 
     RApi::TradeInfo t;
