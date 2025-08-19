@@ -33,9 +33,9 @@ void Utils::convertUnixTimestampToDateTime(int unixTimestamp, const std::string 
     std::chrono::sys_time<std::chrono::seconds> tp{std::chrono::seconds{unixTimestamp}};
     auto zt = std::chrono::zoned_time{tz, tp};
     auto lt = zt.get_local_time();
-    auto h = floor<std::chrono::hours>(lt);
-    auto m = floor<std::chrono::minutes>(lt);
-    auto midnight = floor<std::chrono::days>(lt);
+    auto h = std::chrono::floor<std::chrono::hours>(lt);
+    auto m = std::chrono::floor<std::chrono::minutes>(lt);
+    auto midnight = std::chrono::floor<std::chrono::days>(lt);
     /*auto h = std::chrono::duration_cast<std::chrono::hours>(lt);
     auto m = std::chrono::duration_cast<std::chrono::minutes>(lt);*/
     auto durationSinceMidnight = m - midnight;
@@ -48,9 +48,9 @@ bool Utils::isWithinRegularSession(int unixTimestamp) {
     std::chrono::sys_time<std::chrono::seconds> tp{std::chrono::seconds{unixTimestamp}};
     auto zt = std::chrono::zoned_time{"America/New_York", tp};
     auto lt = zt.get_local_time();
-    auto h = floor<std::chrono::hours>(lt);
-    auto m = floor<std::chrono::minutes>(lt);
-    auto midnight = floor<std::chrono::days>(lt);
+    auto h = std::chrono::floor<std::chrono::hours>(lt);
+    auto m = std::chrono::floor<std::chrono::minutes>(lt);
+    auto midnight = std::chrono::floor<std::chrono::days>(lt);
     auto durationSinceMidnight = m - midnight;
 
     using namespace std::chrono_literals;

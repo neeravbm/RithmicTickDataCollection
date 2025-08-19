@@ -160,7 +160,7 @@ ELSEIF (UNIX)
     )
 
     SET(ZLIB_USE_STATIC_LIBS ON)
-    SET(ZLIB_ROOT "/opt/homebrew/Cellar/zlib/1.3/")
+    #SET(ZLIB_ROOT "/opt/homebrew/Cellar/zlib/1.3/")
     FIND_PACKAGE(ZLIB REQUIRED)
 
 ELSE ()
